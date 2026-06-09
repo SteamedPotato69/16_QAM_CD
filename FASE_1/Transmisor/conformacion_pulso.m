@@ -26,6 +26,19 @@ function senal_banda_base_conformada = ...
 % =========================================================================
 
 % ------------------------------------------------------------------
+% 0) Validación de entradas.
+% ------------------------------------------------------------------
+if isempty(simbolos_complejos_a_transmitir)
+    error('conformacion_pulso: el vector de símbolos no puede estar vacío.');
+end
+if muestras_por_simbolo_sps < 2
+    error('conformacion_pulso: sps debe ser >= 2.');
+end
+if isempty(coeficientes_filtro_rrc)
+    error('conformacion_pulso: los coeficientes del filtro RRC no pueden estar vacíos.');
+end
+
+% ------------------------------------------------------------------
 % 1) UPSAMPLING manual.
 % ------------------------------------------------------------------
 % Se inserta sps-1 ceros entre cada símbolo. Tras esto, la tasa de muestreo

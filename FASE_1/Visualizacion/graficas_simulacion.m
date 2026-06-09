@@ -6,7 +6,8 @@ function graficas_simulacion(vector_EbNo_dB,                       ...
                              senal_pasabanda_para_espectro,        ...
                              muestras_por_simbolo_sps,             ...
                              frecuencia_muestreo_fs,               ...
-                             span_filtro_simbolos)
+                             span_filtro_simbolos,                 ...
+                             EbNo_dB_graficas)
 % =========================================================================
 %  GRAFICAS_SIMULACION
 %  ------------------------------------------------------------------------
@@ -48,7 +49,7 @@ plot(I_ideal(:), Q_ideal(:), 'rx', 'MarkerSize', 12, 'LineWidth', 2);
 grid on; axis equal;
 xlabel('Componente en fase (I)');
 ylabel('Componente en cuadratura (Q)');
-title('Constelación recibida tras filtro acoplado (Eb/No = 10 dB)');
+title(sprintf('Constelación recibida tras filtro acoplado (Eb/No = %.0f dB)', EbNo_dB_graficas));
 legend('Símbolos recibidos','Puntos ideales','Location','northeastoutside');
 
 % =========================================================================

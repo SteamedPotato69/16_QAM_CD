@@ -35,6 +35,19 @@ function senal_pasabanda_con_ruido = ...
 % =========================================================================
 
 % ------------------------------------------------------------------
+% 0) Validación de entradas.
+% ------------------------------------------------------------------
+if isempty(senal_pasabanda_transmitida)
+    error('canal_awgn: la señal pasabanda no puede estar vacía.');
+end
+if bits_por_simbolo < 1
+    error('canal_awgn: bits_por_simbolo debe ser >= 1.');
+end
+if muestras_por_simbolo_sps < 1
+    error('canal_awgn: sps debe ser >= 1.');
+end
+
+% ------------------------------------------------------------------
 % 1) Potencia promedio de la señal a la entrada del canal.
 % ------------------------------------------------------------------
 potencia_promedio_senal = mean(senal_pasabanda_transmitida.^2);

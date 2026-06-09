@@ -35,6 +35,16 @@ function [secuencia_bits, simbolos_complejos_normalizados] = ...
 % =========================================================================
 
 % ------------------------------------------------------------------
+% 0) Validación de entradas.
+% ------------------------------------------------------------------
+if numero_bits_a_generar <= 0
+    error('modulador_binario_16qam: numero_bits debe ser un entero positivo.');
+end
+if mod(numero_bits_a_generar, 4) ~= 0
+    error('modulador_binario_16qam: numero_bits debe ser múltiplo de 4 (k=4 bits/símbolo).');
+end
+
+% ------------------------------------------------------------------
 % 1) Generación de la secuencia binaria aleatoria.
 % ------------------------------------------------------------------
 % randi([0 1], 1, N) produce N bits uniformemente distribuidos en {0,1}.

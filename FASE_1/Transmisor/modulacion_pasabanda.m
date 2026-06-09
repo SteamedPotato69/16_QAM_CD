@@ -29,6 +29,19 @@ function senal_pasabanda_real = ...
 % =========================================================================
 
 % ------------------------------------------------------------------
+% 0) Validación de entradas.
+% ------------------------------------------------------------------
+if isempty(senal_banda_base_compleja)
+    error('modulacion_pasabanda: la señal en banda base no puede estar vacía.');
+end
+if frecuencia_portadora_fc <= 0
+    error('modulacion_pasabanda: fc debe ser positiva.');
+end
+if frecuencia_muestreo_fs <= 0
+    error('modulacion_pasabanda: fs debe ser positiva.');
+end
+
+% ------------------------------------------------------------------
 % 1) Vector temporal acorde con la longitud de la señal banda base.
 % ------------------------------------------------------------------
 longitud_senal      = length(senal_banda_base_compleja);

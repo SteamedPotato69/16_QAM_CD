@@ -34,6 +34,19 @@ function [BER_simulada, BER_teorica] = ...
 % =========================================================================
 
 % ------------------------------------------------------------------
+% 0) Validación de entradas.
+% ------------------------------------------------------------------
+if isempty(secuencia_bits_transmitidos) || isempty(secuencia_bits_recibidos)
+    error('calculo_ber: las secuencias de bits no pueden estar vacías.');
+end
+if mod(log2(orden_modulacion_M), 1) ~= 0
+    error('calculo_ber: M debe ser una potencia de 2.');
+end
+if sqrt(orden_modulacion_M) ~= floor(sqrt(orden_modulacion_M))
+    error('calculo_ber: M debe ser un cuadrado perfecto (QAM cuadrado).');
+end
+
+% ------------------------------------------------------------------
 % 1) Alinear longitudes (por si la convolución dejó símbolos de cola).
 % ------------------------------------------------------------------
 numero_bits_validos = min(length(secuencia_bits_transmitidos), ...

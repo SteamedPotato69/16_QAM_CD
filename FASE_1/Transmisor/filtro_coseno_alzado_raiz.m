@@ -38,6 +38,19 @@ function coeficientes_h_rrc = ...
 %           π·t/Ts·(1 - (4β·t/Ts)^2)
 % =========================================================================
 
+% ------------------------------------------------------------------
+% Validación de entradas.
+% ------------------------------------------------------------------
+if factor_roll_off_beta < 0 || factor_roll_off_beta > 1
+    error('filtro_coseno_alzado_raiz: beta debe estar en el intervalo [0, 1].');
+end
+if span_filtro_simbolos < 1 || mod(span_filtro_simbolos, 1) ~= 0
+    error('filtro_coseno_alzado_raiz: span debe ser un entero positivo >= 1.');
+end
+if muestras_por_simbolo_sps < 2
+    error('filtro_coseno_alzado_raiz: sps debe ser >= 2.');
+end
+
 % Eje temporal del filtro, en muestras.
 % L = 2*span*sps + 1  muestras, centradas en 0.
 numero_muestras_filtro = 2 * span_filtro_simbolos * muestras_por_simbolo_sps + 1;

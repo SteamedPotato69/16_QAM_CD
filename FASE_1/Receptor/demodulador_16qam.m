@@ -39,6 +39,25 @@ function [secuencia_bits_recuperados,                ...
 % =========================================================================
 
 % =========================================================================
+% 0) VALIDACIÓN DE ENTRADAS.
+% =========================================================================
+if isempty(senal_pasabanda_recibida)
+    error('demodulador_16qam: la señal pasabanda recibida no puede estar vacía.');
+end
+if muestras_por_simbolo_sps < 2
+    error('demodulador_16qam: sps debe ser >= 2.');
+end
+if span_filtro_simbolos < 1
+    error('demodulador_16qam: span debe ser un entero >= 1.');
+end
+if frecuencia_portadora_fc <= 0
+    error('demodulador_16qam: fc debe ser positiva.');
+end
+if frecuencia_muestreo_fs <= 0
+    error('demodulador_16qam: fs debe ser positiva.');
+end
+
+% =========================================================================
 % 1) BAJADA DE PASABANDA  (Down-conversion / demodulación I/Q).
 % =========================================================================
 % Multiplicamos por 2cos(2πfct) y -2sin(2πfct) para que:
