@@ -1,14 +1,19 @@
 function [secuencia_bits, simbolos_complejos_normalizados] = ...
-            modulador_binario_16qam(numero_bits_a_generar)
+            modulador_binario_16qam(numero_bits_a_generar, bits_externos)
 % =========================================================================
 %  MODULADOR_BINARIO_16QAM
 %  ------------------------------------------------------------------------
-%  Genera una secuencia binaria aleatoria y la mapea a símbolos complejos
+%  Genera (o acepta) una secuencia binaria y la mapea a símbolos complejos
 %  16-QAM utilizando código Gray (Cumple RF1, RFN2).
 %
 %  Entradas:
-%    numero_bits_a_generar : Cantidad de bits a transmitir
+%    numero_bits_a_generar : Cantidad de bits a generar aleatoriamente
 %                            (debe ser múltiplo de 4).
+%    bits_externos         : (OPCIONAL) Vector de bits {0,1} externos.
+%                            Si se proporciona, se usa en lugar de generar
+%                            bits aleatorios. Longitud debe ser múltiplo de 4.
+%                            Backward-compatible: omitir para comportamiento
+%                            original de Fase I.
 %
 %  Salidas:
 %    secuencia_bits                  : Vector fila con los bits {0,1}.
@@ -35,24 +40,34 @@ function [secuencia_bits, simbolos_complejos_normalizados] = ...
 % =========================================================================
 
 % ------------------------------------------------------------------
-% 0) Validación de entradas.
+% 0) Validación de entradas y selección del origen de bits.
 % ------------------------------------------------------------------
-if numero_bits_a_generar <= 0
-    error('modulador_binario_16qam: numero_bits debe ser un entero positivo.');
+if nargin >= 2 && ~isempty(bits_externos)
+    % --- Modo Fase II: bits externos provistos (audio PCM, etc.) ---
+    if ~all(bits_externos == 0 | bits_externos == 1)
+        error('modulador_binario_16qam: bits_externos solo puede contener {0,1}.');
+    end
+    secuencia_bits        = bits_externos(:)';    % fuerza vector fila
+    numero_bits_a_generar = length(secuencia_bits);
+    if mod(numero_bits_a_generar, 4) ~= 0
+        error('modulador_binario_16qam: bits_externos debe tener longitud múltiplo de 4.');
+    end
+else
+    % --- Modo Fase I: generar bits aleatorios (comportamiento original) ---
+    if numero_bits_a_generar <= 0
+        error('modulador_binario_16qam: numero_bits debe ser un entero positivo.');
+    end
+    if mod(numero_bits_a_generar, 4) ~= 0
+        error('modulador_binario_16qam: numero_bits debe ser múltiplo de 4 (k=4 bits/símbolo).');
+    end
+    % randi([0 1], 1, N) produce N bits uniformemente distribuidos en {0,1}.
+    secuencia_bits = randi([0 1], 1, numero_bits_a_generar);
 end
-if mod(numero_bits_a_generar, 4) ~= 0
-    error('modulador_binario_16qam: numero_bits debe ser múltiplo de 4 (k=4 bits/símbolo).');
-end
-
-% ------------------------------------------------------------------
-% 1) Generación de la secuencia binaria aleatoria.
-% ------------------------------------------------------------------
-% randi([0 1], 1, N) produce N bits uniformemente distribuidos en {0,1}.
-secuencia_bits = randi([0 1], 1, numero_bits_a_generar);
 
 % ------------------------------------------------------------------
 % 2) Agrupar los bits en bloques de k=4 bits, uno por símbolo.
 % ------------------------------------------------------------------
+% (El código desde aquí es idéntico para modos Fase I y Fase II)
 bits_por_simbolo = 4;                                   % k = log2(16).
 numero_simbolos  = numero_bits_a_generar / bits_por_simbolo;
 
