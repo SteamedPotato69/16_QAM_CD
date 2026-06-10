@@ -565,7 +565,7 @@ El sistema se valida mediante:
 
 ---
 
-## Ideas clave para sustentación
+## Ideas clave
 
 - 16-QAM es una modulación bidimensional: usa ramas I y Q simultáneamente.
 - Cada símbolo transporta $k = \log_2(16) = 4$ bits.
@@ -576,19 +576,3 @@ El sistema se valida mediante:
 - La penalización Hamming ($-2.43$ dB) hace que el sistema codificado reciba menos energía por bit — por eso la curva CC empieza peor.
 - La ganancia de codificación aparece a alta SNR porque los errores aislados son corregibles; a baja SNR dominan los errores dobles no corregibles.
 - El SNDR de 98.1 dB del ADC de 16 bits es el límite de calidad del audio — el canal solo empeora esto; nunca lo mejora.
-
----
-
-## Requisitos
-
-- MATLAB (sin toolboxes adicionales).
-
----
-
-## Autor
-
-Proyecto desarrollado para el curso de **Comunicaciones Digitales 2026**.
-
-**Universidad:** Universidad del Cauca  
-**Software:** MATLAB  
-**Tema:** Modulación 16-QAM Gray sobre canal AWGN con codificación Hamming(7,4)
