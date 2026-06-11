@@ -39,13 +39,14 @@ function params = config_fase2()
     params.hamming_d_min       = 3;        % Distancia mínima de Hamming
     params.tasa_codigo         = 4/7;      % Tasa r = k/n
 
-    % ---- Entrelazado para la rama codificada -------------------------------
-    % Se usa para dispersar errores agrupados del demodulador 16-QAM entre
-    % distintas palabras Hamming. Esto hace que Hamming(7,4), que corrige
-    % un error por palabra, sea más efectivo.
-    params.usar_entrelazado = true;
-    params.semilla_entrelazado = 2027;
-    % Agregado
+    % ---- Entrelazado para la rama codificada (experimental) ----------------
+    % El entrelazado dispersa errores en canales con memoria (ráfagas).
+    % En AWGN los errores ya son independientes, por lo que el entrelazado
+    % no mejora la BER. Se deja desactivado por defecto; puede activarse
+    % para experimentar con canales con burst errors.
+    params.usar_entrelazado        = false;
+    params.semilla_entrelazado     = 2027;  % semilla para el barrido BER
+    params.semilla_entrelazado_full = 2028; % semilla para la recuperación de audio
 
     % Penalización de Eb/No por la tasa del código [dB].
     % Para el canal (bits codificados): Ec/N0 = r · Eb/N0
@@ -105,8 +106,8 @@ function params = config_fase2()
     fprintf('  Tasa fuente   : %.1f kbps\n', params.tasa_bits_fuente/1e3);
     fprintf('  Hamming(%d,%d) : r = 4/7 ≈ %.4f, penaliz. = %.2f dB\n', ...
         params.hamming_n, params.hamming_k, params.tasa_codigo, params.penalizacion_codigo_dB);
-    fprintf(' Entrelazado  : %d | semilla = %d\n', ...
-        params.usar_entrelazado, params.semilla_entrelazado); % Agregado
+    fprintf('  Entrelazado   : %d | semilla sweep = %d | semilla full = %d\n', ...
+        params.usar_entrelazado, params.semilla_entrelazado, params.semilla_entrelazado_full);
     fprintf('  Sweep BER     : %d s → %d bits PCM → %d bits codificados\n', ...
         params.duracion_sweep_s, bits_pcm_sweep, bits_cod_sweep);
     fprintf('  Eb/No audio   : %d dB (recuperación completa)\n', params.EbNo_dB_audio);
