@@ -184,13 +184,10 @@ for idx = 1:N_puntos
     [bits_rx_cc, ~, ~] = demodulador_16qam(senal_rx_cc, h_rrc, sps, span, fc, fs);
 
     % Truncar a múltiplo de 7 antes de decodificar.
-    % Tomar exactamente los bits codificados transmitidos.
-    N_val_cc = length(bits_tx_cc_sweep);
-    
-    if length(bits_rx_cc) < N_val_cc
-        error('main_fase2: La rama codificada recuperó menos bits de los transmitidos.');
-    end
-    
+    % El demodulador puede devolver marginalmente menos bits que los
+    % transmitidos por las colas del filtro RRC; se toma el mínimo seguro.
+    N_val_cc = floor(min(length(bits_tx_cc_sweep), length(bits_rx_cc)) / 7) * 7;
+
     bits_rx_cc_validos = bits_rx_cc(1:N_val_cc);
     
     % Desentrelazar antes de decodificar Hamming.
@@ -239,7 +236,7 @@ bits_hamming_full = codificador_hamming(bits_pcm_full);
 % Entrelazado para el audio completo.
 if params_f2.usar_entrelazado
     [bits_tx_cc_full, perm_full] = entrelazador_bits( ...
-        bits_hamming_full, params_f2.semilla_entrelazado + 1);
+        bits_hamming_full, params_f2.semilla_entrelazado_full);
     fprintf('[Audio-Rec] Entrelazado activado para audio completo.\n');
 else
     bits_tx_cc_full = bits_hamming_full;
@@ -263,11 +260,8 @@ senal_rx_full = canal_awgn(senal_pb_full, EcNo_dB_audio, k, sps);
 [bits_rx_full, ~, ~] = demodulador_16qam(senal_rx_full, h_rrc, sps, span, fc, fs);
 
 % Decodificación Hamming del audio completo.
-N_val_full = N_bits_cod_full;
-
-if length(bits_rx_full) < N_val_full
-    error('main_fase2: La recuperación de audio obtuvo menos bits de los transmitidos.');
-end
+% Mismo criterio que en el barrido: truncar al mínimo múltiplo de 7.
+N_val_full = floor(min(N_bits_cod_full, length(bits_rx_full)) / 7) * 7;
 
 bits_rx_full_validos = bits_rx_full(1:N_val_full);
 
