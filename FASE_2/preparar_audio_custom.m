@@ -1,7 +1,15 @@
 %% preparar_audio_custom.m
 % Prepara un audio local para usarlo como entrada oficial de Fase II.
 % Genera FASE_2/Audio/audio_prueba.wav en formato:
-% WAV, mono, 44100 Hz, 10 segundos, 16 bits.
+% WAV, mono, 44100 Hz, entre 10 y 20 segundos, 16 bits.
+%
+% Reglas de duración:
+%   < 10 s  → se rechaza con error (audio demasiado corto)
+%   10-20 s → se acepta tal cual
+%   > 20 s  → se recorta a 20 segundos
+
+DURACION_MIN_S = 10;
+DURACION_MAX_S = 20;
 
 clear;
 clc;
@@ -38,16 +46,21 @@ if fsOriginal ~= fsObjetivo
     fprintf('Audio remuestreado a 44100 Hz.\n');
 end
 
-% Recortar o rellenar a 10 segundos
-duracionObjetivo = 10;
-Nobjetivo = fsObjetivo * duracionObjetivo;
+% Validar y ajustar duración.
+duracion_actual = length(x) / fsObjetivo;
+fprintf('Duración tras remuestreo: %.2f s\n', duracion_actual);
 
-if length(x) > Nobjetivo
-    x = x(1:Nobjetivo);
-    fprintf('Audio recortado a 10 segundos.\n');
-elseif length(x) < Nobjetivo
-    x = [x; zeros(Nobjetivo - length(x), 1)];
-    fprintf('Audio rellenado con silencio hasta 10 segundos.\n');
+if duracion_actual < DURACION_MIN_S
+    error('El audio dura %.1f s, mínimo requerido = %d s. Usa un audio más largo.', ...
+        duracion_actual, DURACION_MIN_S);
+end
+
+if duracion_actual > DURACION_MAX_S
+    x = x(1 : DURACION_MAX_S * fsObjetivo);
+    fprintf('Audio recortado a %d segundos (máximo permitido).\n', DURACION_MAX_S);
+else
+    fprintf('Duración aceptada: %.2f s (entre %d y %d s).\n', ...
+        duracion_actual, DURACION_MIN_S, DURACION_MAX_S);
 end
 
 % Normalizar para evitar saturación
@@ -70,4 +83,5 @@ fprintf('\nAudio preparado correctamente.\n');
 fprintf('Guardado en: %s\n', rutaSalida);
 fprintf('Fs final = %.0f Hz\n', fsObjetivo);
 fprintf('Duración final = %.2f s\n', length(x)/fsObjetivo);
-fprintf('Formato final: WAV, mono, 16 bits.\n');
+fprintf('Formato final: WAV, mono, 16 bits (entre %d y %d s).\n', ...
+    DURACION_MIN_S, DURACION_MAX_S);
