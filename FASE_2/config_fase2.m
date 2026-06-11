@@ -39,6 +39,14 @@ function params = config_fase2()
     params.hamming_d_min       = 3;        % Distancia mínima de Hamming
     params.tasa_codigo         = 4/7;      % Tasa r = k/n
 
+    % ---- Entrelazado para la rama codificada -------------------------------
+    % Se usa para dispersar errores agrupados del demodulador 16-QAM entre
+    % distintas palabras Hamming. Esto hace que Hamming(7,4), que corrige
+    % un error por palabra, sea más efectivo.
+    params.usar_entrelazado = true;
+    params.semilla_entrelazado = 2027;
+    % Agregado
+
     % Penalización de Eb/No por la tasa del código [dB].
     % Para el canal (bits codificados): Ec/N0 = r · Eb/N0
     % → EcNo_dB = EbNo_dB + 10·log10(r) = EbNo_dB − 2.43 dB
@@ -73,7 +81,7 @@ function params = config_fase2()
         error('config_fase2: la tasa del código debe estar en (0, 1).');
     end
     if ~any(abs(params.vector_EbNo_dB - params.EbNo_dB_audio) < 1e-9)
-        warning('config_fase2: EbNo_dB_audio no está en el vector de barrido.');
+    warning('config_fase2: EbNo_dB_audio no está en el vector de barrido.');
     end
 
     % Verificar que el bitstream PCM sea múltiplo de 4 (para Hamming k=4).
@@ -97,6 +105,8 @@ function params = config_fase2()
     fprintf('  Tasa fuente   : %.1f kbps\n', params.tasa_bits_fuente/1e3);
     fprintf('  Hamming(%d,%d) : r = 4/7 ≈ %.4f, penaliz. = %.2f dB\n', ...
         params.hamming_n, params.hamming_k, params.tasa_codigo, params.penalizacion_codigo_dB);
+    fprintf(' Entrelazado  : %d | semilla = %d\n', ...
+        params.usar_entrelazado, params.semilla_entrelazado); % Agregado
     fprintf('  Sweep BER     : %d s → %d bits PCM → %d bits codificados\n', ...
         params.duracion_sweep_s, bits_pcm_sweep, bits_cod_sweep);
     fprintf('  Eb/No audio   : %d dB (recuperación completa)\n', params.EbNo_dB_audio);
