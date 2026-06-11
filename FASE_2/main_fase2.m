@@ -82,8 +82,25 @@ if fs_lectura ~= params_f2.fs_audio
 end
 
 N_total = length(audio_completo);
-fprintf('[Audio] Cargado: %d muestras (%.1f s) a %.0f Hz\n\n', ...
-    N_total, N_total/params_f2.fs_audio, params_f2.fs_audio);
+duracion_s = N_total / params_f2.fs_audio;
+fprintf('[Audio] Cargado: %d muestras (%.1f s) a %.0f Hz\n', ...
+    N_total, duracion_s, params_f2.fs_audio);
+
+% Validar duración mínima.
+if duracion_s < params_f2.duracion_audio_min_s
+    error('main_fase2: el audio dura %.1f s, mínimo requerido = %d s. Usa un audio más largo.', ...
+        duracion_s, params_f2.duracion_audio_min_s);
+end
+
+% Truncar si supera la duración máxima.
+N_max = params_f2.duracion_audio_max_s * params_f2.fs_audio;
+if N_total > N_max
+    audio_completo = audio_completo(1:N_max);
+    N_total = N_max;
+    fprintf('[Audio] Recortado a %d s (maximo permitido).\n', params_f2.duracion_audio_max_s);
+end
+
+fprintf('\n');
 
 % -------------------------------------------------------------------------
 %  3. Conversión ADC del segmento de barrido (1 segundo).

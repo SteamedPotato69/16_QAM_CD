@@ -16,7 +16,8 @@ function params = config_fase2()
     % ---- Fuente de audio (RF1-Fase2) ----------------------------------------
     params.bits_por_muestra    = 16;       % Resolución ADC/DAC [bits/muestra]
     params.fs_audio            = 44100;    % Frecuencia de muestreo audio [Hz]
-    params.duracion_audio_s    = 10;       % Duración total del audio [s]
+    params.duracion_audio_min_s = 10;      % Duración mínima aceptable [s]
+    params.duracion_audio_max_s = 20;      % Duración máxima — se recorta si supera [s]
 
     % Tasa de bits de la fuente (PCM, mono, sin comprimir).
     params.tasa_bits_fuente    = params.fs_audio * params.bits_por_muestra;
@@ -75,8 +76,11 @@ function params = config_fase2()
     if params.fs_audio <= 0
         error('config_fase2: fs_audio debe ser positiva.');
     end
-    if params.duracion_sweep_s > params.duracion_audio_s
-        error('config_fase2: duracion_sweep_s no puede superar duracion_audio_s.');
+    if params.duracion_sweep_s > params.duracion_audio_min_s
+        error('config_fase2: duracion_sweep_s no puede superar duracion_audio_min_s.');
+    end
+    if params.duracion_audio_min_s >= params.duracion_audio_max_s
+        error('config_fase2: duracion_audio_min_s debe ser menor que duracion_audio_max_s.');
     end
     if params.tasa_codigo <= 0 || params.tasa_codigo >= 1
         error('config_fase2: la tasa del código debe estar en (0, 1).');
@@ -101,8 +105,9 @@ function params = config_fase2()
     %  RESUMEN DE PARÁMETROS
     % =========================================================================
     fprintf('\n--- Configuración Fase II ---\n');
-    fprintf('  Audio         : %.0f Hz, %d bits/muestra, %d s\n', ...
-        params.fs_audio, params.bits_por_muestra, params.duracion_audio_s);
+    fprintf('  Audio         : %.0f Hz, %d bits/muestra, min=%ds max=%ds\n', ...
+        params.fs_audio, params.bits_por_muestra, ...
+        params.duracion_audio_min_s, params.duracion_audio_max_s);
     fprintf('  Tasa fuente   : %.1f kbps\n', params.tasa_bits_fuente/1e3);
     fprintf('  Hamming(%d,%d) : r = 4/7 ≈ %.4f, penaliz. = %.2f dB\n', ...
         params.hamming_n, params.hamming_k, params.tasa_codigo, params.penalizacion_codigo_dB);
