@@ -110,10 +110,24 @@ fprintf('[ADC] bits_pcm_sweep = %d bits (%.1f Kbps efectivos)\n\n', ...
 % -------------------------------------------------------------------------
 fprintf('[Hamming] Codificando segmento de barrido...\n');
 bits_hamming_sweep = codificador_hamming(bits_pcm_sweep);
-% bits_hamming_sweep: N_bits_sweep × 7/4 = 1 234 800 bits
-N_bits_cod = length(bits_hamming_sweep);
+
+% Entrelazado opcional de la rama codificada.
+% Esto dispersa errores agrupados de 16-QAM antes de la decodificacion Hamming.
+if params_f2.usar_entrelazado
+    [bits_tx_cc_sweep, perm_sweep] = entrelazador_bits( ...
+        bits_hamming_sweep, params_f2.semilla_entrelazado);
+    fprintf('[Hamming] Entrelazado activado para segmento de barrido.\n');
+else
+    bits_tx_cc_sweep = bits_hamming_sweep;
+    perm_sweep = [];
+end
+
+N_bits_cod = length(bits_tx_cc_sweep);
+
 fprintf('[Hamming] bits_codificados = %d bits (expansión ×%.2f)\n\n', ...
     N_bits_cod, N_bits_cod / N_bits_sweep);
+
+% Modificado
 
 % -------------------------------------------------------------------------
 %  5. Pre-calcular filtro RRC y señales pasabanda (FUERA del bucle de BER).
@@ -133,7 +147,7 @@ fprintf('[Mod] Señal pasabanda SC: %d muestras\n', length(senal_pb_sc));
 
 % --- Sistema CON codificación Hamming ---
 fprintf('[Mod] Modulando señal CON Hamming (%d bits)...\n', N_bits_cod);
-[~, simbolos_cc] = modulador_binario_16qam(N_bits_cod, bits_hamming_sweep);
+[~, simbolos_cc] = modulador_binario_16qam(N_bits_cod, bits_tx_cc_sweep); % Modificado
 senal_bb_cc = conformacion_pulso(simbolos_cc, h_rrc, sps);
 senal_pb_cc = modulacion_pasabanda(senal_bb_cc, fc, fs);
 fprintf('[Mod] Señal pasabanda CC: %d muestras\n\n', length(senal_pb_cc));
@@ -170,13 +184,28 @@ for idx = 1:N_puntos
     [bits_rx_cc, ~, ~] = demodulador_16qam(senal_rx_cc, h_rrc, sps, span, fc, fs);
 
     % Truncar a múltiplo de 7 antes de decodificar.
-    N_val_cc  = floor(min(length(bits_hamming_sweep), length(bits_rx_cc)) / 7) * 7;
-    [bits_decod_cc, ~] = decodificador_hamming(bits_rx_cc(1:N_val_cc));
+    % Tomar exactamente los bits codificados transmitidos.
+    N_val_cc = length(bits_tx_cc_sweep);
+    
+    if length(bits_rx_cc) < N_val_cc
+        error('main_fase2: La rama codificada recuperó menos bits de los transmitidos.');
+    end
+    
+    bits_rx_cc_validos = bits_rx_cc(1:N_val_cc);
+    
+    % Desentrelazar antes de decodificar Hamming.
+    if params_f2.usar_entrelazado
+        bits_rx_cc_validos = desentrelazador_bits(bits_rx_cc_validos, perm_sweep);
+    end
 
-    % Comparar bits decodificados con bits de datos originales.
-    N_datos_cc   = length(bits_decod_cc);   % = N_val_cc * 4/7
-    errores_cc   = sum(bits_decod_cc ~= bits_pcm_sweep(1:N_datos_cc));
+    [bits_decod_cc, ~] = decodificador_hamming(bits_rx_cc_validos);
+    
+    % Comparar bits decodificados con bits PCM originales.
+    N_datos_cc = min(length(bits_decod_cc), length(bits_pcm_sweep));
+    errores_cc = sum(bits_decod_cc(1:N_datos_cc) ~= bits_pcm_sweep(1:N_datos_cc));
     BER_sim_cc(idx) = errores_cc / N_datos_cc;
+
+    % Añadido
 
     % ---- Progreso en consola ------------------------------------------------
     fprintf('  %6.1f dB    |   %.3e    |   %.3e    |  %d/%d\n', ...
@@ -206,13 +235,26 @@ bits_pcm_full = bits_pcm_full(1:N_bits_full);
 
 % Codificación Hamming del audio completo.
 bits_hamming_full = codificador_hamming(bits_pcm_full);
-N_bits_cod_full   = length(bits_hamming_full);
+
+% Entrelazado para el audio completo.
+if params_f2.usar_entrelazado
+    [bits_tx_cc_full, perm_full] = entrelazador_bits( ...
+        bits_hamming_full, params_f2.semilla_entrelazado + 1);
+    fprintf('[Audio-Rec] Entrelazado activado para audio completo.\n');
+else
+    bits_tx_cc_full = bits_hamming_full;
+    perm_full = [];
+end
+
+N_bits_cod_full = length(bits_tx_cc_full);
 
 fprintf('[Audio-Rec] Bits PCM = %d | Bits Hamming = %d\n', ...
     N_bits_full, N_bits_cod_full);
 
+% Modificado
+
 % Modulación + transmisión + demodulación.
-[~, simbolos_full] = modulador_binario_16qam(N_bits_cod_full, bits_hamming_full);
+[~, simbolos_full] = modulador_binario_16qam(N_bits_cod_full, bits_tx_cc_full);
 senal_bb_full = conformacion_pulso(simbolos_full, h_rrc, sps);
 senal_pb_full = modulacion_pasabanda(senal_bb_full, fc, fs);
 
@@ -221,9 +263,20 @@ senal_rx_full = canal_awgn(senal_pb_full, EcNo_dB_audio, k, sps);
 [bits_rx_full, ~, ~] = demodulador_16qam(senal_rx_full, h_rrc, sps, span, fc, fs);
 
 % Decodificación Hamming del audio completo.
-N_val_full    = floor(min(N_bits_cod_full, length(bits_rx_full)) / 7) * 7;
-[bits_decod_full, n_corr_full] = decodificador_hamming(bits_rx_full(1:N_val_full));
+N_val_full = N_bits_cod_full;
 
+if length(bits_rx_full) < N_val_full
+    error('main_fase2: La recuperación de audio obtuvo menos bits de los transmitidos.');
+end
+
+bits_rx_full_validos = bits_rx_full(1:N_val_full);
+
+% Desentrelazar antes de decodificar Hamming.
+if params_f2.usar_entrelazado
+    bits_rx_full_validos = desentrelazador_bits(bits_rx_full_validos, perm_full);
+end
+
+[bits_decod_full, n_corr_full] = decodificador_hamming(bits_rx_full_validos);
 fprintf('[Audio-Rec] Codewords con corrección aplicada: %d\n', n_corr_full);
 
 % DAC: reconstruir señal de audio.
@@ -269,8 +322,16 @@ if ~isempty(idx_ref)
     else
         ganancia_sim_dB = Inf;
     end
-    fprintf('[Resultado] A 12 dB: BER SC=%.2e | BER CC=%.2e | Ganancia≈%.1f dB (en BER)\n', ...
-        BER_sim_sc(idx_ref), BER_sim_cc(idx_ref), ganancia_sim_dB);
+        if ganancia_sim_dB >= 0 % Modificado
+        texto_ganancia = 'mejora';
+    else
+        texto_ganancia = 'degradacion';
+    end
+    
+    fprintf(['[Resultado] A 12 dB: BER SC=%.2e | BER CC=%.2e | ', ...
+        '%s≈%.1f dB (comparacion BER)\n'], ...
+        BER_sim_sc(idx_ref), BER_sim_cc(idx_ref), ...
+        texto_ganancia, abs(ganancia_sim_dB));
 end
 
 % -------------------------------------------------------------------------
