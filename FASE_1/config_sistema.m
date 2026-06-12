@@ -17,8 +17,8 @@ function params = config_sistema()
     % ---- Parámetros de tiempo y tasa ----------------------------------------
     params.tasa_simbolos_Rs         = 1;                 % [baudios] (normalizado)
     params.muestras_por_simbolo_sps = 8;                 % Sobremuestreo sps
-    params.frecuencia_muestreo_fs   = params.tasa_simbolos_Rs * params.muestras_por_simbolo_sps;
-    params.periodo_simbolo_Ts       = 1 / params.tasa_simbolos_Rs;
+    params.frecuencia_muestreo_fs   = params.tasa_simbolos_Rs * params.muestras_por_simbolo_sps;  % [Hz]
+    params.periodo_simbolo_Ts       = 1 / params.tasa_simbolos_Rs;  % [s]
 
     % ---- Filtro coseno alzado raíz (RNF2, RNF3) -----------------------------
     % β controla la transición espectral: 0=mínimo ancho de banda, 1=máximo.
@@ -30,7 +30,7 @@ function params = config_sistema()
     % Restricción de Nyquist: fc + B/2 < fs/2,
     % donde B = (1+β)·Rs → B/2 ≈ 0.675 para β=0.35, Rs=1.
     % Con fc=2·Rs=2 y fs=8: 2 + 0.675 = 2.675 < 4 ✓
-    params.frecuencia_portadora_fc  = 2 * params.tasa_simbolos_Rs;
+    params.frecuencia_portadora_fc  = 2 * params.tasa_simbolos_Rs;  % [Hz]
 
     % ---- Simulación (RF4, RF5) ----------------------------------------------
     params.numero_bits              = 1e5;
